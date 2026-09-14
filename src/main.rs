@@ -1,15 +1,18 @@
 use std::io::{Read, Seek};
 use std::fs::File;
+use std::collections::HashMap;
 // use roxmltree::Document;
 
 
 fn main() { 
-    let file = File::open(r"C:\Users\Burragato.MASCIA\Desktop\progetti\rust\epub\Vento e Verità Brandon Sanderson z-library.sk, 1lib.sk, z-lib.sk.epub")
+    let file = File::open(r"/home/barru/Scrivania/progetti/kobo-book-downloader-master/tutti_libri/Adharanand Finn - The Rise of the Ultra Runners.epub")
         .expect("Failed to open file");
 
     let mut zip = zip::ZipArchive::new(file).expect("...");
     let content = read_container_xml(&mut zip).expect("non  ho trovato nulla");
-    read_content_xml(&mut zip, &content).expect("non ho trovato i contenuti");
+    let indice = read_content_xml(&mut zip, &content).expect("non ho trovato i contenuti");
+    let parse = roxmltree::Document::parse(&indice);
+    println!("{:?}", parse);
 }
 
 
@@ -25,14 +28,17 @@ fn read_container_xml<R:Read + Seek>(zip:&mut zip::ZipArchive<R>) -> zip::result
     Ok(contenuto_parsato.to_string())
 }
 
-fn read_content_xml<R:Read + Seek>(zip:&mut zip::ZipArchive<R>, path : &String) -> zip::result::ZipResult<()>{
+fn read_content_xml<R:Read + Seek>(zip:&mut zip::ZipArchive<R>, path : &String) -> zip::result::ZipResult<String>{
     let mut file1 = zip.by_name(path)?;
     let mut contenuto = String::new();
     file1.read_to_string(&mut contenuto)?;
-    println!("{contenuto}");
-    Ok(())
+    // println!("{contenuto}");
+    Ok(contenuto)
 }
 
+fn extract_manifest(contenuto:&roxmltree::Document)-> HashMap<String, String>{
+    todo!()
+}
 // fn list_zip_contents(reader: impl Read + Seek) -> zip::result::ZipResult<()> {
 //     let mut zip = zip::ZipArchive::new(reader)?;
 
