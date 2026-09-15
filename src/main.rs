@@ -15,7 +15,12 @@ fn main() {
     let manifest = extract_manifest(&parse1);
     let spine = extract_spine(&parse1);
     let ordine_libro1 = build_reading_order(&spine, &manifest);
-    println!("{:?}",ordine_libro1 )
+    let esempio : String = "OEBPS/p020_capitolo-09.xhtml".to_string();
+    let capitolo_esempio : String =  read_content_xml(&mut zip, &esempio ).expect("...");
+    let doc_capitolo = roxmltree::Document::parse(&capitolo_esempio).expect("parsing fallito");
+    let capitolo_testo = read_text(&doc_capitolo);
+
+    println!("{}",capitolo_testo)
 }
 
 
@@ -71,4 +76,20 @@ fn build_reading_order(vettore: &Vec<String>, mappa : &HashMap<String, String>) 
         ordine_libro.push(mappa.get(ind).unwrap().to_string());
     }
     ordine_libro
+}
+
+fn read_text(contenuto:&roxmltree::Document) -> String{
+    let mut testo_completo = String::new();
+    for paragrafo in contenuto.descendants(){
+        if paragrafo.has_tag_name("p"){
+            for nodo in paragrafo.descendants(){
+                if nodo.is_text(){
+                    let testo_parziale = nodo.text().unwrap();
+                    testo_completo.push_str(testo_parziale);
+                }
+            }   
+              testo_completo.push_str("\n") 
+        }
+    }
+    testo_completo
 }
