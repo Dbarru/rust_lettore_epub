@@ -1,10 +1,9 @@
 use std::io::{Read, Seek};
 use std::fs::File;
 use std::collections::HashMap;
+use std::io;
 use roxmltree::Document;
 // use scraper::{Html, Selector};
-
-
 fn main() { 
     let file = File::open(r"/home/barru/Scrivania/progetti/kobo-book-downloader-master/tutti_libri/Adharanand Finn - The Rise of the Ultra Runners.epub")
         .expect("Failed to open file");
@@ -16,20 +15,8 @@ fn main() {
     let manifest = extract_manifest(&parse1);
     let spine = extract_spine(&parse1);
     let ordine_libro1 = build_reading_order(&spine, &manifest);
-    let esempio : String = "OPS/9781783351343_chapter_11.html".to_string();
-    let capitolo_esempio : String =  read_content_xml(&mut zip, &esempio ).expect("...");
-
-    let opt = roxmltree::ParsingOptions{
-        allow_dtd : true,
-        ..roxmltree::ParsingOptions::default()
-    };
-
-    let doc_capitolo = roxmltree::Document::parse_with_options(&capitolo_esempio, opt).expect("parsing fallito");
-    let capitolo_testo = read_text(&doc_capitolo);
-
-    println!("{}",capitolo_testo);
+    chapter_selection(&ordine_libro1, &mut zip);
 }
-
 
 fn read_container_xml<R:Read + Seek>(zip:&mut zip::ZipArchive<R>) -> zip::result::ZipResult<String> {
     let mut file1 = zip.by_name("META-INF/container.xml")?;
@@ -98,4 +85,27 @@ fn read_text(contenuto:&roxmltree::Document) -> String{
         }
     }
     testo_completo
+}
+
+fn chapter_selection<R:Read + Seek>(vettore_capitoli: &Vec<String>, zip:&mut zip::ZipArchive<R>) -> String{
+    let num_capitoli : usize = vettore_capitoli.len();
+
+    loop{
+        println!("scegli un capitolo da 1 a {}", num_capitoli);
+        let mut capitolo: String = String::new();
+        io::stdin()
+            .read_line(&mut capitolo)
+            .expect("Failed to read line");
+
+        let capitolo:usize =  match capitolo.trim().parse(){
+            Ok(num) => num,
+            Err(_) => continue,
+        };
+        let esempio: &String = vettore_capitoli.get(capitolo).expect("messaggio");
+
+        let test: String = read_content_xml(zip, &esempio).expect("non ce la faccio piu");
+        let testo_parsato = roxmltree::Document::parse(&test).expect("parsing fallito");   
+        let capitolo_testo = read_text(&testo_parsato); 
+        println!("{}",capitolo_testo);
+    }
 }
