@@ -1,11 +1,12 @@
 use std::io::{Read, Seek};
 use std::fs::File;
 use std::collections::HashMap;
-// use roxmltree::Document;
+use roxmltree::Document;
+// use scraper::{Html, Selector};
 
 
 fn main() { 
-    let file = File::open(r"C:\Users\Burragato.MASCIA\Desktop\progetti\rust\epub\Vento e Verità Brandon Sanderson z-library.sk, 1lib.sk, z-lib.sk.epub")
+    let file = File::open(r"/home/barru/Scrivania/progetti/kobo-book-downloader-master/tutti_libri/Adharanand Finn - The Rise of the Ultra Runners.epub")
         .expect("Failed to open file");
 
     let mut zip = zip::ZipArchive::new(file).expect("...");
@@ -15,12 +16,18 @@ fn main() {
     let manifest = extract_manifest(&parse1);
     let spine = extract_spine(&parse1);
     let ordine_libro1 = build_reading_order(&spine, &manifest);
-    let esempio : String = "OEBPS/p020_capitolo-09.xhtml".to_string();
+    let esempio : String = "OPS/9781783351343_chapter_11.html".to_string();
     let capitolo_esempio : String =  read_content_xml(&mut zip, &esempio ).expect("...");
-    let doc_capitolo = roxmltree::Document::parse(&capitolo_esempio).expect("parsing fallito");
+
+    let opt = roxmltree::ParsingOptions{
+        allow_dtd : true,
+        ..roxmltree::ParsingOptions::default()
+    };
+
+    let doc_capitolo = roxmltree::Document::parse_with_options(&capitolo_esempio, opt).expect("parsing fallito");
     let capitolo_testo = read_text(&doc_capitolo);
 
-    println!("{}",capitolo_testo)
+    println!("{}",capitolo_testo);
 }
 
 
@@ -40,7 +47,6 @@ fn read_content_xml<R:Read + Seek>(zip:&mut zip::ZipArchive<R>, path : &String) 
     let mut file1 = zip.by_name(path)?;
     let mut contenuto = String::new();
     file1.read_to_string(&mut contenuto)?;
-    // println!("{contenuto}");
     Ok(contenuto)
 }
 
