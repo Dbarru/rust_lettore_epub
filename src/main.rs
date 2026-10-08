@@ -2,7 +2,7 @@ use std::io::{Read, Seek};
 use std::fs::File;
 use std::collections::HashMap;
 use std::io;
-use roxmltree::Document;
+// use roxmltree::Document;
 // use scraper::{Html, Selector};
 fn main() { 
     let file = File::open(r"/home/barru/Scrivania/progetti/kobo-book-downloader-master/tutti_libri/Adharanand Finn - The Rise of the Ultra Runners.epub")
@@ -14,7 +14,13 @@ fn main() {
     let parse1 = roxmltree::Document::parse(&indice).unwrap();
     let manifest = extract_manifest(&parse1);
     let spine = extract_spine(&parse1);
-    let ordine_libro1 = build_reading_order(&spine, &manifest);
+
+    let cartella_capitoli: &str = match content.rsplit_once('/'){
+        Some((cartella, _)) => cartella,
+        None => "",
+    };
+    
+    let ordine_libro1 = build_reading_order(&spine, &manifest, &cartella_capitoli);
     chapter_selection(&ordine_libro1, &mut zip);
 }
 
@@ -63,10 +69,18 @@ fn extract_spine(contenuto:&roxmltree::Document)-> Vec<String>{
     spine_indice
 }
 
-fn build_reading_order(vettore: &Vec<String>, mappa : &HashMap<String, String>) -> Vec<String>{
+fn build_reading_order(vettore: &Vec<String>, mappa : &HashMap<String, String>, cartella_capitoli : &str) -> Vec<String>{
     let mut ordine_libro: Vec<String> = Vec::new();
     for ind in vettore {
-        ordine_libro.push(mappa.get(ind).unwrap().to_string());
+        if cartella_capitoli.is_empty(){
+            let percorso_completo: String = ind.to_string();
+            ordine_libro.push(mappa.get(&percorso_completo).unwrap().to_string());
+        }else{
+            let esempio: String = ind.to_string();
+            let  percorso_completo = format!("{}/{}", cartella_capitoli, mappa.get(&esempio).unwrap().to_string());
+            ordine_libro.push(percorso_completo);
+        }
+        
     }
     ordine_libro
 }
@@ -87,7 +101,7 @@ fn read_text(contenuto:&roxmltree::Document) -> String{
     testo_completo
 }
 
-fn chapter_selection<R:Read + Seek>(vettore_capitoli: &Vec<String>, zip:&mut zip::ZipArchive<R>) -> String{
+fn chapter_selection<R:Read + Seek + std::fmt::Debug>(vettore_capitoli: &Vec<String>, zip:&mut zip::ZipArchive<R>) -> String{
     let num_capitoli : usize = vettore_capitoli.len();
 
     loop{
@@ -101,10 +115,18 @@ fn chapter_selection<R:Read + Seek>(vettore_capitoli: &Vec<String>, zip:&mut zip
             Ok(num) => num,
             Err(_) => continue,
         };
+        
         let esempio: &String = vettore_capitoli.get(capitolo).expect("messaggio");
 
+        println!("{:?}",zip);
         let test: String = read_content_xml(zip, &esempio).expect("non ce la faccio piu");
-        let testo_parsato = roxmltree::Document::parse(&test).expect("parsing fallito");   
+
+        let opt = roxmltree::ParsingOptions {
+            allow_dtd: true,
+            ..roxmltree::ParsingOptions::default()
+        };
+
+        let testo_parsato = roxmltree::Document::parse_with_options(&test, opt).expect("parsing fallito");   
         let capitolo_testo = read_text(&testo_parsato); 
         println!("{}",capitolo_testo);
     }
