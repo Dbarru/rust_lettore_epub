@@ -2,19 +2,23 @@ use std::io::{Read, Seek};
 use std::fs::File;
 use std::collections::HashMap;
 use std::io;
+use scan_dir::ScanDir;
+
 // use roxmltree::Document;
 fn main() { 
     let file = File::open(r"C:\Users\Burragato.MASCIA\Desktop\progetti\rust\epub\Vento e Verità Brandon Sanderson z-library.sk, 1lib.sk, z-lib.sk.epub")
         .expect("Failed to open file");
 
-    let mut zip = zip::ZipArchive::new(file).expect("...");
-    let content = read_container_xml(&mut zip).expect("non  ho trovato nulla");
-    let indice = read_content_xml(&mut zip, &content).expect("non ho trovato i contenuti");
-    let parse1 = roxmltree::Document::parse(&indice).unwrap();
-    let manifest = extract_manifest(&parse1);
-    let spine = extract_spine(&parse1);
-    let ordine_libro1 = build_reading_order(&spine, &manifest);
-    chapter_selection(&ordine_libro1, &mut zip);
+    // let mut zip = zip::ZipArchive::new(file).expect("...");
+    // let content = read_container_xml(&mut zip).expect("non  ho trovato nulla");
+    // let indice = read_content_xml(&mut zip, &content).expect("non ho trovato i contenuti");
+    // let parse1 = roxmltree::Document::parse(&indice).unwrap();
+    // let manifest = extract_manifest(&parse1);
+    // let spine = extract_spine(&parse1);
+    // let ordine_libro1 = build_reading_order(&spine, &manifest);
+    // chapter_selection(&ordine_libro1, &mut zip);
+    _books_list()
+
 }
 
 fn read_container_xml<R:Read + Seek>(zip:&mut zip::ZipArchive<R>) -> zip::result::ZipResult<String> {
@@ -108,4 +112,12 @@ fn chapter_selection<R:Read + Seek>(vettore_capitoli: &Vec<String>, zip:&mut zip
         let capitolo_testo = read_text(&testo_parsato); 
         println!("{}",capitolo_testo);
     }
+}
+
+fn _books_list(){
+    ScanDir::files().read(r"C:\Users\Burragato.MASCIA\Desktop\progetti\rust\epub", |iter| {
+        for (path, name) in iter {
+            println!("File {:?} in {:?}", name, path);
+        }
+    }).unwrap()  
 }
