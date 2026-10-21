@@ -28,7 +28,7 @@ pub fn extract_manifest(contenuto:&roxmltree::Document)-> HashMap<String, String
             let id:&str = node.attribute("id").unwrap();
             let href:&str = node.attribute("href").unwrap();
             hashmap_indice.insert(
-                 id.to_string(),
+                id.to_string(),
                 href.to_string()
             );
         }  
@@ -61,4 +61,20 @@ pub fn build_reading_order(vettore: &Vec<String>, mappa : &HashMap<String, Strin
         
     }
     ordine_libro
+}
+
+pub fn read_text(contenuto:&roxmltree::Document) -> String{
+    let mut testo_completo = String::new();
+    for paragrafo in contenuto.descendants(){
+        if paragrafo.has_tag_name("p"){
+            for nodo in paragrafo.descendants(){
+                if nodo.is_text(){
+                    let testo_parziale = nodo.text().unwrap();
+                    testo_completo.push_str(testo_parziale);
+                }
+            }   
+              testo_completo.push_str("\n") 
+        }
+    }
+    testo_completo
 }

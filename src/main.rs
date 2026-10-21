@@ -8,23 +8,24 @@ mod r#struct;
 // use roxmltree::Document;
 // use scraper::{Html, Selector};
 fn main() { 
-    let file = File::open(r"C:\Users\Burragato.MASCIA\Desktop\progetti\rust\epub\Vento e Verità Brandon Sanderson z-library.sk, 1lib.sk, z-lib.sk.epub ")
-        .expect("Failed to open file");
+    // let file = File::open(r"C:\Users\Burragato.MASCIA\Desktop\progetti\rust\epub\Vento e Verità Brandon Sanderson z-library.sk, 1lib.sk, z-lib.sk.epub ")
+    //     .expect("Failed to open file");
 
-    let mut zip = zip::ZipArchive::new(file).expect("...");
-    let content = read_container_xml(&mut zip).expect("non  ho trovato nulla");
-    let indice = read_content_xml(&mut zip, &content).expect("non ho trovato i contenuti");
-    let parse1 = roxmltree::Document::parse(&indice).unwrap();
-    let manifest = extract_manifest(&parse1);
-    let spine = extract_spine(&parse1);
+    // let mut zip = zip::ZipArchive::new(file).expect("...");
+    // let content = read_container_xml(&mut zip).expect("non  ho trovato nulla");
+    // let indice = read_content_xml(&mut zip, &content).expect("non ho trovato i contenuti");
+    // let parse1 = roxmltree::Document::parse(&indice).unwrap();
+    // let manifest = extract_manifest(&parse1);
+    // let spine = extract_spine(&parse1);
 
-    let cartella_capitoli: &str = match content.rsplit_once('/'){
-        Some((cartella, _)) => cartella,
-        None => "",
-    };
+    // let cartella_capitoli: &str = match content.rsplit_once('/'){
+    //     Some((cartella, _)) => cartella,
+    //     None => "",
+    // };
     
-    let ordine_libro1 = build_reading_order(&spine, &manifest, &cartella_capitoli);
-    chapter_selection(&ordine_libro1, &mut zip);
+    // let ordine_libro1 = build_reading_order(&spine, &manifest, &cartella_capitoli);
+    // chapter_selection(&ordine_libro1, &mut zip);
+    _books_list();
 }
 
 fn read_container_xml<R:Read + Seek>(zip:&mut zip::ZipArchive<R>) -> zip::result::ZipResult<String> {
@@ -136,7 +137,7 @@ fn chapter_selection<R:Read + Seek + std::fmt::Debug>(vettore_capitoli: &Vec<Str
 }
 
 fn _books_list(){
-    ScanDir::files().read(r"C:\Users\Burragato.MASCIA\Desktop\progetti\rust\epub", |iter| {
+    scan_dir::ScanDir::files().read(r"/home/barru/Scrivania/progetti/kobo-book-downloader-master/tutti_libri", |iter| {
         for (path, name) in iter {
             println!("File {:?} in {:?}", name, path);
         }
