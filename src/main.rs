@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::io;
 use crossterm::{event::{DisableMouseCapture, EnableMouseCapture}, execute};
 mod r#struct;
+mod dati;
 mod r#ui;
 use r#struct::Libreria;
 use r#struct::Book;
@@ -20,10 +21,9 @@ fn main()-> io::Result<()> {
     // primo_libro.chapter(40 as usize);
     // println!("{}", primo_libro.chapter );
 
-    let percorso = r"C:\Users\Burragato.MASCIA\Desktop\progetti\rust\epub".to_string();
     ratatui::run(|terminal| {
         execute!(io::stdout(), EnableMouseCapture)?;
-        let esito = App::new(percorso).run(terminal);
+        let esito = App::new().run(terminal);
         execute!(io::stdout(), DisableMouseCapture)?; // ripristina il terminale
         esito
     })
