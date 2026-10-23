@@ -27,6 +27,7 @@ enum Screen {
     NuovaNota,  // si digita il testo della nota
     Note,       // elenco delle note del libro
     LeggiNota,  // testo completo di una nota
+    Note_Globali, // elenco delle note di tutti i libri
 }
 
 pub struct App {
@@ -209,6 +210,10 @@ impl App {
                     self.errore = None;
                     self.screen = Screen::Cartella;
                 }
+                KeyCode::Char('l')=> {
+                    self.screen = Screen::Note_Globali;
+                    self.notes_state.select(Some(0));
+                }
                 _ => {}
             },
             Screen::Capitoli => match code {
@@ -262,6 +267,12 @@ impl App {
                 KeyCode::Char('g') => self.vai_alla_nota(),
                 KeyCode::Esc => self.screen = Screen::Note,
                 _ => {}
+            },
+
+            Screen::Note_Globali => match code {
+                KeyCode::Down => self.notes_state.select_next(),
+                KeyCode::Up => self.notes_state.select_previous(),
+                _ => {},
             },
             Screen::Cartella | Screen::NuovaNota => {}
         }
@@ -388,6 +399,13 @@ impl App {
         }
     }
 
+    // allora devi implementare ancora questa funzione. ma ci sei quasi. ci sei quasi davvero. ti stai facendo aiutare da gemini notebook, ma molte cose in realtà ci eri gia arrivato 
+    //quindi forse ci stai iniziando a capire qualcosa. non so quanto abbia senso imparare a programmare effettivamente, ma tutto fa brodo. prima o poi ti torna utile di sicuro 
+    // dai che ce la fai.
+    fn flatten_notes() -> Vec<>{
+
+    }
+
     fn draw(&mut self, frame: &mut Frame) {
         let area = frame.area();
         match self.screen {
@@ -406,7 +424,7 @@ impl App {
             Screen::Libri => {
                 let voci = self.visibili().iter().map(|&i| self.books[i].1.clone()).collect();
                 let titolo = self.titolo_ricerca("Seleziona un libro");
-                let list = lista(voci, &titolo, " Apri <Invio> Cerca </> Cartella <C> ");
+                let list = lista(voci, &titolo, " Apri <Invio> Cerca </> Cartella <C> Note <l> ");
                 frame.render_stateful_widget(list, area, &mut self.books_state);
             }
             Screen::Capitoli => {
@@ -492,6 +510,9 @@ impl App {
                         ));
                     frame.render_widget(testo, area);
                 }
+            }
+            Screen:: Note_Globali =>{
+
             }
         }
     }
