@@ -272,6 +272,11 @@ impl App {
             Screen::Note_Globali => match code {
                 KeyCode::Down => self.notes_state.select_next(),
                 KeyCode::Up => self.notes_state.select_previous(),
+                KeyCode::Esc => self.screen = Screen::Libri,
+                KeyCode::Enter => {
+                    self.nota_scroll = 0;
+                    self.screen = Screen::LeggiNota;
+                }
                 _ => {},
             },
             Screen::Cartella | Screen::NuovaNota => {}
@@ -402,8 +407,8 @@ impl App {
     // allora devi implementare ancora questa funzione. ma ci sei quasi. ci sei quasi davvero. ti stai facendo aiutare da gemini notebook, ma molte cose in realtà ci eri gia arrivato 
     //quindi forse ci stai iniziando a capire qualcosa. non so quanto abbia senso imparare a programmare effettivamente, ma tutto fa brodo. prima o poi ti torna utile di sicuro 
     // dai che ce la fai.
-    fn flatten_notes() -> Vec<>{
-
+    fn flatten_notes(&self) -> Vec<(&String, &Nota )>{
+        self.dati.libri.iter().flat_map(|(percorso, dati_libro)| dati_libro.note.iter().map(move |nota| (percorso, nota))).collect()
     }
 
     fn draw(&mut self, frame: &mut Frame) {
@@ -512,7 +517,19 @@ impl App {
                 }
             }
             Screen:: Note_Globali =>{
-
+                // let note_libri = &self.flatten_notes()
+                {
+                    let voci = self
+                        .flatten_notes()
+                        .into_iter().map(|(percorso, nota)| format!("libro. {} cap. {} riga {}: {}", percorso, nota.capitolo +1,  nota.riga, nota.testo))
+                        .collect();
+                    let list = lista(
+                        voci,
+                        " Note globali ",
+                        " Indietro <Esc> ",
+                    );
+                    frame.render_stateful_widget(list, area, &mut self.notes_state);
+                }
             }
         }
     }
