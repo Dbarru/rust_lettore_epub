@@ -273,7 +273,7 @@ impl App {
                 KeyCode::Down => self.notes_state.select_next(),
                 KeyCode::Up => self.notes_state.select_previous(),
                 KeyCode::Esc => self.screen = Screen::Libri,
-                KeyCode::Enter => {
+                KeyCode::Char('g') => {
                     let Some(i) = self.notes_state.selected() else { return };
                     let info_nota= self.flatten_notes().get(i).map(|(percorso, nota)| (percorso.clone(), nota.capitolo, nota.riga));
                     
@@ -285,7 +285,18 @@ impl App {
                         self.scroll = riga;
                         self.screen = Screen::Lettura;
                     } 
+                    }
+                KeyCode::Enter => {
+                    let Some(i) = self.notes_state.selected() else { return };
+                    let info_nota= self.flatten_notes().get(i).map(|(percorso, nota)| (percorso.clone(), nota.capitolo, nota.riga));
+                    if let Some((percorso, _, _))=info_nota{
+                        let mut book = Book::new_book(percorso.to_string());
+                        self.book = Some(book);
+                        self.nota_scroll = 0;
+                        self.screen = Screen::LeggiNota;
+                    }
                 }
+                
                 _ => {},
             },
             Screen::Cartella | Screen::NuovaNota => {}
@@ -535,7 +546,7 @@ impl App {
                     let list = lista(
                         voci,
                         " Note globali ",
-                        " Indietro <Esc> ",
+                        " Indietro <Esc> leggi nota <ENTER> vai al punto <g> ",
                     );
                     frame.render_stateful_widget(list, area, &mut self.notes_state);
                 }
