@@ -274,8 +274,17 @@ impl App {
                 KeyCode::Up => self.notes_state.select_previous(),
                 KeyCode::Esc => self.screen = Screen::Libri,
                 KeyCode::Enter => {
-                    self.nota_scroll = 0;
-                    self.screen = Screen::LeggiNota;
+                    let Some(i) = self.notes_state.selected() else { return };
+                    let info_nota= self.flatten_notes().get(i).map(|(percorso, nota)| (percorso.clone(), nota.capitolo, nota.riga));
+                    
+                    if let Some((percorso, capitolo, riga)) = info_nota {
+                        let mut book = Book::new_book(percorso.clone());
+                        book.chapter(capitolo);
+                        self.book = Some(book);
+                        self.capitolo = capitolo;
+                        self.scroll = riga;
+                        self.screen = Screen::Lettura;
+                    } 
                 }
                 _ => {},
             },
