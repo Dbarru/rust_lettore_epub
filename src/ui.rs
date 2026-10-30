@@ -53,6 +53,9 @@ pub struct App {
     /// testo che l'utente sta digitando (percorso o nota)
     input: String,
     errore: Option<String>,
+    altezza : u16, 
+    larghezza : u16,
+    righe_tot_cap :u16,
 }
 
 impl App {
@@ -73,6 +76,9 @@ impl App {
             cercando: false,
             input: String::new(),
             errore: None,
+            altezza: 0,
+            larghezza: 0,
+            righe_tot_cap: 0,
         };
         // se ricordiamo una cartella ancora valida, saltiamo la domanda iniziale
         if let Some(c) = app.dati.cartella.clone().filter(|c| Path::new(c).is_dir()) {
@@ -232,8 +238,8 @@ impl App {
             Screen::Lettura => match code {
                 KeyCode::Down => self.scroll = self.scroll.saturating_add(1),
                 KeyCode::Up => self.scroll = self.scroll.saturating_sub(1),
-                KeyCode::PageDown => self.scroll = self.scroll.saturating_add(10),
-                KeyCode::PageUp => self.scroll = self.scroll.saturating_sub(10),
+                KeyCode::PageDown => self.turn_page_up(),
+                KeyCode::PageUp => self.turn_page_down(),
                 KeyCode::Char('n') => {
                     self.input.clear();
                     self.screen = Screen::NuovaNota;
@@ -431,6 +437,32 @@ impl App {
         self.dati.libri.iter().flat_map(|(percorso, dati_libro)| dati_libro.note.iter().map(move |nota| (percorso, nota))).collect()
     }
 
+    //funzione per selezinoare la pagina dopo o per andare al capitolo successivo 
+    fn turn_page_up(&mut self){
+        if self.scroll < self.righe_tot_cap.saturating_sub(self.altezza){
+            self.scroll = self.scroll.saturating_add(self.altezza-1);
+        } else{
+            self.chapters_state.select(Some(self.capitolo +1));
+            self.capitolo = self.capitolo + 1 ;
+            if let Some(book) = self.book.as_mut() {
+                book.chapter(self.capitolo);
+            }
+            self.scroll = 0;
+        }
+    }
+
+    fn turn_page_down(&mut self){
+        if self.scroll.saturating_sub(self.altezza) == 0 {
+                self.chapters_state.select(Some(self.capitolo -1));
+                self.capitolo = self.capitolo - 1 ;
+                if let Some(book) = self.book.as_mut() {
+                    book.chapter(self.capitolo);
+                }
+                self.scroll = 0;
+        } else {
+            self.scroll = self.scroll.saturating_sub(self.altezza-1);
+        }}
+
     fn draw(&mut self, frame: &mut Frame) {
         let area = frame.area();
         match self.screen {
@@ -450,9 +482,11 @@ impl App {
                 let voci = self.visibili().iter().map(|&i| self.books[i].1.clone()).collect();
                 let titolo = self.titolo_ricerca("Seleziona un libro");
                 let list = lista(voci, &titolo, " Apri <Invio> Cerca </> Cartella <C> Note <l> ");
+                self.altezza = area.height.saturating_sub(2);
                 frame.render_stateful_widget(list, area, &mut self.books_state);
             }
             Screen::Capitoli => {
+                self.altezza = area.height.saturating_sub(2);
                 if let Some(book) = &self.book {
                     let segnalibro = self.dati.libri.get(&book.path).and_then(|d| d.segnalibro);
                     let voci = self
@@ -469,6 +503,8 @@ impl App {
                 }
             }
             Screen::Lettura | Screen::NuovaNota => {
+                self.altezza = area.height.saturating_sub(2);
+                self.larghezza = area.width.saturating_sub(2);
                 if let Some(book) = &self.book {
                     let note = self.dati.libri.get(&book.path).map_or(0, |d| {
                         d.note.iter().filter(|n| n.capitolo == self.capitolo).count()
@@ -482,6 +518,7 @@ impl App {
                             " Scorri <↑↓ PgUp PgDn> Nota <N> Elenco note <L> Indietro <Esc> ",
                             true,
                         ));
+                    self.righe_tot_cap = testo.line_count(self.larghezza) as u16;
                     frame.render_widget(testo, area);
                 }
                 if self.screen == Screen::NuovaNota {
